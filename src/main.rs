@@ -1,10 +1,7 @@
 //! Render example where each glyph pixel is output as an ascii character.
 use std::cmp::min;
-use rusttype::{point, Font, Scale};
-use image::{open, DynamicImage, Rgba};
-use std::io::Write;
-use image::io::Reader as ImageReader;
-use std::{env, result};
+use image::{open, DynamicImage, RgbaImage};
+use std::{env};
 
 fn main() {
 	let args: Vec<String> = env::args().collect();
@@ -45,9 +42,25 @@ fn main() {
 			return;
 		}
 	};
+	let normalize = match args.get(4) {
+		Some(str) => match str.parse::<bool>(){
+			Ok(w) => w,
+			Err(_) => {
+				println!("Please specify true or false for normalization.");
+				return;
+			}
+		}
+		None => false
+	};
 
 	let img = open(img_path).unwrap().into_rgba8();
-	let gray_img =  DynamicImage::ImageRgba8(img).into_luma8();
+
+	let result = img_to_text(img, width, height, normalize);
+	println!("{}", result);
+}
+
+pub fn img_to_text(image: RgbaImage, width: usize, height: usize, normalize: bool) -> String{
+	let gray_img =  DynamicImage::ImageRgba8(image).into_luma8();
 	let img_width = gray_img.width();
 	let img_height = gray_img.height();
 
@@ -76,6 +89,24 @@ fn main() {
 			avg_value_buffer[x][y] = value_buffer[x][y] as f64 / counts_buffer [x][y] as f64
 		}
 	}
+
+	let mut max_value = 255.0;
+	let mut min_value = 0.0;
+	if normalize {
+		min_value = avg_value_buffer
+			.iter()
+			.flatten()
+			.min_by(|&&a, &b| a.partial_cmp(b).unwrap())
+			.unwrap()
+			.clone();
+		max_value = avg_value_buffer
+			.iter()
+			.flatten()
+			.max_by(|&&a, &b| a.partial_cmp(b).unwrap())
+			.unwrap()
+			.clone();
+	}
+
 	let standard_ascii_value_map= b"$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. ";
 	let trimmed_ascii_value_map = b"@%#x+=:-. ";
 
@@ -83,7 +114,7 @@ fn main() {
 	let mut out_buffer= vec![vec![' '; height]; width];
 	for x in 0..width {
 		for y in 0..height {
-			let value_pct = avg_value_buffer[x][y]/255.0;
+			let value_pct = (avg_value_buffer[x][y] - min_value)/max_value;
 			//println!("{}", value_pct);
 			let idx = min((value_pct * (value_map_length as f64)) as usize,value_map_length-1);
 			out_buffer[x][y] = trimmed_ascii_value_map[idx] as char;
@@ -97,5 +128,5 @@ fn main() {
 		}
 		result.push('\n')
 	}
-	println!("{}", result);
+	result
 }
