@@ -8,3 +8,10 @@ edition = "2021"
 [dependencies]
 rusttype = "0.9.3"
 image = "0.24.5"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name="textdisp"
+path="src/main.rs"
