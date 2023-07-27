@@ -7,7 +7,7 @@ Render images as ascii text.
 ```textdisp.exe path\to\image.png 80 40```
 will generate an ascii image 80 characters wide and 40 characters tall of the image in path\to\image.png
 
-```textdisp.exe path\to\image.png 120 80 true```
+```textdisp.exe path\to\image.png 120 80 --normalize=true```
 will generate an ascii image 120 characters wide and 80 characters tall of the image and will also normalize the image's value range
 
 Image will be stretched or squashed to fit if the aspect ratio does not match.
