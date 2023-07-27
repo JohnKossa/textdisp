@@ -17,32 +17,32 @@ fn main() {
 	};
 
 	//take in width and height (in characters)
-	let width =  match args.get(2) {
-		Some(str) => match str.parse::<usize>(){
-			Ok(w) => w,
-			Err(_) => {
-				println!("Please specify a positive integer for width.");
-				return;
+	let width: Option<usize> = args.iter().find_map(|arg| {
+		if arg.starts_with("--width=") {
+			match &arg["--width=".len()..].parse::<usize>() {
+				Ok(val) => Some(*val),
+				Err(_) => {
+					println!("Please specify a positive integer for width.");
+					None
+				}
 			}
+		} else {
+			None
 		}
-		None => {
-			println!("Please specify the width (in characters) of the output string.");
-			return;
-		}
-	};
-	let height = match args.get(3) {
-		Some(str) => match str.parse::<usize>(){
-			Ok(w) => w,
-			Err(_) => {
-				println!("Please specify a positive integer for height.");
-				return;
+	});
+	let height: Option<usize> = args.iter().find_map(|arg| {
+		if arg.starts_with("--height=") {
+			match &arg["--height=".len()..].parse::<usize>() {
+				Ok(val) => Some(*val),
+				Err(_) => {
+					println!("Please specify a positive integer for height.");
+					None
+				}
 			}
+		} else {
+			None
 		}
-		None => {
-			println!("Please specify the height (in characters) of the output string.");
-			return;
-		}
-	};
+	});
 	// Check for normalize flag in arguments
 	let normalize: bool = args.iter().find_map(|arg| {
 		if arg.starts_with("--normalize=") {
@@ -58,8 +58,23 @@ fn main() {
 		}
 	}).unwrap_or(false);
 
+	// Check for invert flag in arguments
+	let invert: bool = args.iter().find_map(|arg| {
+		if arg.starts_with("--invert=") {
+			match &arg["--invert=".len()..].parse::<bool>() {
+				Ok(val) => Some(*val),
+				Err(_) => {
+					println!("Please specify true or false for value inversion.");
+					None
+				}
+			}
+		} else {
+			None
+		}
+	}).unwrap_or(false);
+
 	let img = open(img_path).unwrap().into_rgba8();
 
-	let result = img_to_text(img, width, height, normalize);
+	let result = img_to_text(img, width, height, normalize, invert);
 	println!("{}", result);
 }

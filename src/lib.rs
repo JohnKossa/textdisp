@@ -1,10 +1,27 @@
-use std::cmp::min;
+use std::cmp::{min,max};
 use image::{DynamicImage, RgbaImage};
 
-pub fn img_to_text(image: RgbaImage, width: usize, height: usize, normalize: bool) -> String{
+pub fn img_to_text(image: RgbaImage, requested_width: Option<usize>, requested_height: Option<usize>, normalize: bool, invert_value: bool) -> String{
 	let gray_img =  DynamicImage::ImageRgba8(image).into_luma8();
 	let img_width = gray_img.width();
 	let img_height = gray_img.height();
+
+	let (width, height) = match (requested_width, requested_height){
+		(Some(w), Some(h)) => (w,h),
+		(Some(w), None) =>{
+			//ideal ratio is width being double height, since characters are usually 1x2
+			//look at image to get missing value
+			let h = w * img_height as usize/ img_width as usize;
+			(w,h)
+		},
+		(None, Some(h)) => {
+			//ideal ratio is width being double height, since characters are usually 1x2
+			//look at image to get missing value
+			let w = 2 * h * img_width as usize / img_height as usize;
+			(w,h)
+		}
+		(None, None) => (80,40)
+	};
 
 	//get chars per unit width
 	//get chars per unit height
@@ -32,22 +49,24 @@ pub fn img_to_text(image: RgbaImage, width: usize, height: usize, normalize: boo
 		}
 	}
 
-	let mut max_value = 255.0;
-	let mut min_value = 0.0;
-	if normalize {
-		min_value = avg_value_buffer
-			.iter()
-			.flatten()
-			.min_by(|&&a, &b| a.partial_cmp(b).unwrap())
-			.unwrap()
-			.clone();
-		max_value = avg_value_buffer
-			.iter()
-			.flatten()
-			.max_by(|&&a, &b| a.partial_cmp(b).unwrap())
-			.unwrap()
-			.clone();
-	}
+	let max_value = match normalize {
+		false => 255.0,
+		true => avg_value_buffer
+					.iter()
+					.flatten()
+					.max_by(|&&a, &b| a.partial_cmp(b).unwrap())
+					.unwrap()
+					.clone()
+	};
+	let min_value= match normalize {
+		false => 0.0,
+		true => avg_value_buffer
+					.iter()
+					.flatten()
+					.min_by(|&&a, &b| a.partial_cmp(b).unwrap())
+					.unwrap()
+					.clone()
+	};
 
 	let standard_ascii_value_map= b"$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. ";
 	let trimmed_ascii_value_map = b"@%#x+=:-. ";
@@ -58,7 +77,11 @@ pub fn img_to_text(image: RgbaImage, width: usize, height: usize, normalize: boo
 		for y in 0..height {
 			let value_pct = (avg_value_buffer[x][y] - min_value)/max_value;
 			//println!("{}", value_pct);
-			let idx = min((value_pct * (value_map_length as f64)) as usize,value_map_length-1);
+			//let idx = min((value_pct * (value_map_length as f64)) as usize,value_map_length-1);
+			let idx = match invert_value{
+				false => min((value_pct * (value_map_length as f64)) as usize,value_map_length-1),
+				true =>  min(((1.0 - value_pct) * (value_map_length as f64)) as usize, value_map_length-1)
+			};
 			out_buffer[x][y] = trimmed_ascii_value_map[idx] as char;
 		}
 	}
