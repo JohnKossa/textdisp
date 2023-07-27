@@ -42,16 +42,20 @@ fn main() {
 			return;
 		}
 	};
-	let normalize = match args.get(4) {
-		Some(str) => match str.parse::<bool>(){
-			Ok(w) => w,
-			Err(_) => {
-				println!("Please specify true or false for normalization.");
-				return;
+	// Check for normalize flag in arguments
+	let normalize: bool = args.iter().find_map(|arg| {
+		if arg.starts_with("--normalize=") {
+			match &arg["--normalize=".len()..].parse::<bool>() {
+				Ok(val) => Some(*val),
+				Err(_) => {
+					println!("Please specify true or false for normalization.");
+					None
+				}
 			}
+		} else {
+			None
 		}
-		None => false
-	};
+	}).unwrap_or(false);
 
 	let img = open(img_path).unwrap().into_rgba8();
 
