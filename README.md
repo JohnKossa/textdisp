@@ -19,11 +19,15 @@ will generate an ascii image 120 characters wide and 80 characters high.
 Image will be stretched or squashed to fit if the aspect ratio does not match.
 The colors will also be value inverted (so black becomes white and white becomes black).
 
+```textdisp path\to\image.png--color=true```
+will generate an ascii image tagged with 4 bit terminal color codes for displaying within a linux terminal
+
 ## Planned Future Work
 
 1. ~~Support for dynamic ranging (image adjusts scale from absolute to relative to the most and least bright regions in the source image)~~
 2. ~~Convert this from an executable to a library module, so I can reuse it in some of my other projects.~~
 3. ~~Match text to image aspect ratio automatically if desired. (Scale and crop functionality)~~
-4. Option for an "extended" ascii set that provides more granularity in brightness value but it does look a bit more cluttered.
+4. ~~Added color tags for 4 bit terminal output.~~
+5. Option for an "extended" ascii set that provides more granularity in brightness value but it does look a bit more cluttered.
 5. I have an idea for how to generate different ascii outputs depending on the target font, analyzing it and building a gradient from it from scratch.
 6. Speed upgrades? Maybe Rayon, but we'll see. It's pretty fast as is.
