@@ -3,9 +3,16 @@ use image::open;
 use std::{env};
 mod lib;
 use lib::img_to_text;
+use lib::img_to_colored_terminal_text;
 
 fn main() {
 	let args: Vec<String> = env::args().collect();
+
+	//if there are no parameters, show usage text
+	if args.len() == 1 {
+		println!("Usage: textdisp <image_path> [--width=<width>] [--height=<height>] [--normalize=<true/false>] [--invert=<true/false>]");
+		return;
+	}
 
 	//take in image as png/frame/etc
 	let img_path = match args.get(1){
@@ -73,8 +80,33 @@ fn main() {
 		}
 	}).unwrap_or(false);
 
-	let img = open(img_path).unwrap().into_rgba8();
+	//Check for color flag in arguments
+	let colorize: bool = args.iter().find_map(|arg| {
+		if arg.starts_with("--colorize=") {
+			match &arg["--colorize=".len()..].parse::<bool>() {
+				Ok(val) => Some(*val),
+				Err(_) => {
+					println!("Please specify true or false for colorization.");
+					None
+				}
+			}
+		} else {
+			None
+		}
+	}).unwrap_or(false);
 
-	let result = img_to_text(img, width, height, normalize, invert);
+	let img = match open(img_path){
+		Ok(image_result) => image_result.into_rgba8(),
+		Err(_) => {
+			println!("Please specify a valid path to an image file.");
+			return;
+		}
+	};
+
+	let result = match colorize {
+		true => img_to_colored_terminal_text(img, width, height, normalize, invert),
+		false => img_to_text(img, width, height, normalize, invert)
+	};
+	//let result = img_to_text(img, width, height, normalize, invert);
 	println!("{}", result);
 }
