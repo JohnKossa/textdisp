@@ -1,99 +1,50 @@
 //! Render example where each glyph pixel is output as an ascii character.
 use image::open;
-use std::{env};
+use clap::Parser;
 mod lib;
 use lib::img_to_text;
 use lib::img_to_colored_terminal_text;
 
-fn main() {
-	let args: Vec<String> = env::args().collect();
+#[derive(Parser, Debug)]
+#[command(about = "Converts an image to ascii art and displays it in the terminal.")]
+#[command(version, long_about = None)]
+struct Args {
+	image_path: String,
+	#[arg(short, long)]
+	/// Width of the output text in characters
+	width: Option<usize>,
+	#[arg(short, long)]
+	/// Height of the output text in characters
+	height: Option<usize>,
+	#[arg(short, long)]
+	/// Scale mappings to image range instead of absolute range
+	normalize: bool,
+	#[arg(short, long)]
+	/// Invert value scale
+	invert: bool,
+	#[arg(short, long)]
+	/// Display with tagged terminal colors
+	colorize: bool
+}
 
-	//if there are no parameters, show usage text
-	if args.len() == 1 {
-		println!("Usage: textdisp <image_path> [--width=<width>] [--height=<height>] [--normalize=<true/false>] [--invert=<true/false>]");
-		return;
-	}
+fn main() {
+	let matches = Args::parse();
 
 	//take in image as png/frame/etc
-	let img_path = match args.get(1){
-		Some(str) => str,
-		None => {
-			println!("Please specify the path to an image file.");
-			return;
-		}
-	};
+	let img_path = &matches.image_path;
 
 	//take in width and height (in characters)
-	let width: Option<usize> = args.iter().find_map(|arg| {
-		if arg.starts_with("--width=") {
-			match &arg["--width=".len()..].parse::<usize>() {
-				Ok(val) => Some(*val),
-				Err(_) => {
-					println!("Please specify a positive integer for width.");
-					None
-				}
-			}
-		} else {
-			None
-		}
-	});
-	let height: Option<usize> = args.iter().find_map(|arg| {
-		if arg.starts_with("--height=") {
-			match &arg["--height=".len()..].parse::<usize>() {
-				Ok(val) => Some(*val),
-				Err(_) => {
-					println!("Please specify a positive integer for height.");
-					None
-				}
-			}
-		} else {
-			None
-		}
-	});
+	let width: Option<usize> = matches.width;
+	let height: Option<usize> = matches.height;
+
 	// Check for normalize flag in arguments
-	let normalize: bool = args.iter().find_map(|arg| {
-		if arg.starts_with("--normalize=") {
-			match &arg["--normalize=".len()..].parse::<bool>() {
-				Ok(val) => Some(*val),
-				Err(_) => {
-					println!("Please specify true or false for normalization.");
-					None
-				}
-			}
-		} else {
-			None
-		}
-	}).unwrap_or(false);
+	let normalize: bool = matches.normalize;
 
 	// Check for invert flag in arguments
-	let invert: bool = args.iter().find_map(|arg| {
-		if arg.starts_with("--invert=") {
-			match &arg["--invert=".len()..].parse::<bool>() {
-				Ok(val) => Some(*val),
-				Err(_) => {
-					println!("Please specify true or false for value inversion.");
-					None
-				}
-			}
-		} else {
-			None
-		}
-	}).unwrap_or(false);
+	let invert: bool = matches.invert;
 
 	//Check for color flag in arguments
-	let colorize: bool = args.iter().find_map(|arg| {
-		if arg.starts_with("--colorize=") {
-			match &arg["--colorize=".len()..].parse::<bool>() {
-				Ok(val) => Some(*val),
-				Err(_) => {
-					println!("Please specify true or false for colorization.");
-					None
-				}
-			}
-		} else {
-			None
-		}
-	}).unwrap_or(false);
+	let colorize: bool = matches.colorize;
 
 	let img = match open(img_path){
 		Ok(image_result) => image_result.into_rgba8(),
@@ -107,6 +58,5 @@ fn main() {
 		true => img_to_colored_terminal_text(img, width, height, normalize, invert),
 		false => img_to_text(img, width, height, normalize, invert)
 	};
-	//let result = img_to_text(img, width, height, normalize, invert);
 	println!("{}", result);
 }

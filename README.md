@@ -19,7 +19,7 @@ will generate an ascii image 120 characters wide and 80 characters high.
 Image will be stretched or squashed to fit if the aspect ratio does not match.
 The colors will also be value inverted (so black becomes white and white becomes black).
 
-```textdisp path\to\image.png--color=true```
+```textdisp path\to\image.png --colorize=true```
 will generate an ascii image tagged with 4 bit terminal color codes for displaying within a linux terminal
 
 ## Planned Future Work
